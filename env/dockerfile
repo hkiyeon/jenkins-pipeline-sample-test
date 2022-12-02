@@ -1,0 +1,10 @@
+FROM jenkins/jenkins:latest
+
+USER root
+#docker install
+RUN mkdir -p /opt/docker
+WORKDIR /opt/docker
+COPY scripts/install_docker.sh /opt/docker/
+RUN chmod +x /opt/docker/install_docker.sh && sh /opt/docker/install_docker.sh
+
+USER jenkins
