@@ -28,7 +28,7 @@ pipeline {
             }
         }
         stage('============ Run test code ============') {
-            when { expreesion { return params.RUN_TEST }}
+            when { expression { return params.RUN_TEST }}
             steps {
                 echo "Stage Test"
             }
