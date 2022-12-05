@@ -18,12 +18,12 @@ pipeline {
             }
             steps {
                 dir("${env.WORKSPACE}") {
-                    sh 'docker build -t test:1 .'
+                    sh 'docker build -t test:01 .'
                 }
             }
             post {
                 always {
-                    echo "Docker build success!"
+                    echo "Docker build success!!"
                 }
             }
         }
