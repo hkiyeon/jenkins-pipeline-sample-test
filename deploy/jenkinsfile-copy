@@ -17,13 +17,32 @@ pipeline {
                 expression {return params.BUILD_DOCKER_IMAGE}
             }
             steps {
-                echo "Stage Build"
+                dir("${env.WORKSPACE}") {
+                    sh 'docker build -t test:1 .'
+                }
             }
             post {
                 always {
-                    echo "post stage!!!"
+                    echo "Docker build success!"
                 }
             }
+        }
+        stage('============ Run test code ============') {
+            when { expreesion { return params.RUN_TEST }}
+            steps {
+                echo "Stage Test"
+            }
+        }
+        stage('============ Push Docker Image ============') {
+            when { expression { return params.PUSH_DOCKER_IMAGE }}
+            steps {
+                echo "Stage Test"
+            }
+        }
+    }
+    post {
+        cleanup {
+            echo "Post cleanup"
         }
     }
 }
