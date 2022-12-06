@@ -19,7 +19,7 @@ pipeline {
             }
             steps {
                 dir("${env.WORKSPACE}") {
-                    sh 'docker build -t hwang088/test:01 .'
+                    sh 'docker build -t test:01 .'
                 }
             }
             post {
