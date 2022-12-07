@@ -7,7 +7,7 @@ pipeline {
         booleanParam(name : 'PUSH_DOCKER_IMAGE', defaultValue : true, description : 'PUSH_DOCKER_IMAGE')
         booleanParam(name : 'DEPLOY_WORKLOAD', defaultValue : true, description : 'DEPLOY_WORKLOAD')
         
-        string(name : 'DOCKER_ACCOUNT_ID', defaultValue : 'hwang088', description : 'DOCKER_ACCOUNT_ID')
+        string(name : 'ACCOUNT_ID', defaultValue : 'hwang088', description : 'ACCOUNT_ID')
         string(name : 'DOCKER_IMAGE_NAME', defaultValue : 'pipeline-test', description : 'DOCKER_IMAGE_NAME')
         string(name : 'DOCKER_TAG', defaultValue : '1.0.0', description : 'DOCKER_TAG')
     }
@@ -16,6 +16,7 @@ pipeline {
         REGION = "ap-northeast-1"
         ECR_REPOSITORY = "${params.DOCKER_ACCOUNT_ID}/${params.DOCKER_IMAGE_NAME}"
         ECR_DOCKER_TAG = "${params.DOCKER_TAG}"
+        DOCKER_ACCOUNT_ID = "${params.ACCOUNT_ID}"
     }
 
     stages {
@@ -46,7 +47,7 @@ pipeline {
             steps {
                 
                 sh '''
-                   cat ~/my_password.txt | docker login --username ${params.DOCKER_ACCOUNT_ID} --password-stdin
+                   cat ~/my_password.txt | docker login --username ${DOCKER_ACCOUNT_ID} --password-stdin
                    docker push ${ECR_REPOSITORY}:${ECR_DOCKER_TAG}
                 '''
                 echo "Push Docker Image to Docker_hub"
