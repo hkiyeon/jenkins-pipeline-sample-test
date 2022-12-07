@@ -7,8 +7,8 @@ pipeline {
         booleanParam(name : 'PUSH_DOCKER_IMAGE', defaultValue : true, description : 'PUSH_DOCKER_IMAGE')
         booleanParam(name : 'DEPLOY_WORKLOAD', defaultValue : true, description : 'DEPLOY_WORKLOAD')
         
-        string(name : 'DOCKER_ACCOUNT_ID', defaultValue : "hwang088", description : 'DOCKER_ACCOUNT_ID')
-        string(name : 'DOCKER_IMAGE_NAME' defaultValue : 'pipeline-test', description : DOCKER_IMAGE_NAME)
+        string(name : 'DOCKER_ACCOUNT_ID', defaultValue : 'hwang088', description : 'DOCKER_ACCOUNT_ID')
+        string(name : 'DOCKER_IMAGE_NAME', defaultValue : 'pipeline-test', description : 'DOCKER_IMAGE_NAME')
         string(name : 'DOCKER_TAG', defaultValue : '1.0.0', description : 'DOCKER_TAG')
     }
 
