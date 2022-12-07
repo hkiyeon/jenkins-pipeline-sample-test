@@ -46,7 +46,7 @@ pipeline {
             steps {
                 echo "Push Docker Image to Docker_hub"
                 sh '''
-                   cat ~/my_password.txt docker login --username ${params.DOCKER_ACCOUNT_ID} --password-stdin
+                   cat ~/my_password.txt | docker login --username ${params.DOCKER_ACCOUNT_ID} --password-stdin
                    docker push ${ECR_REPOSITORY}:${ECR_DOCKER_TAG}
                 '''
             
