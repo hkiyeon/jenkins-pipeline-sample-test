@@ -6,10 +6,16 @@ pipeline {
         booleanParam(name : 'RUN_TEST', defaultValue : true, description : 'RUN_TEST')
         booleanParam(name : 'PUSH_DOCKER_IMAGE', defaultValue : true, description : 'PUSH_DOCKER_IMAGE')
         booleanParam(name : 'DEPLOY_WORKLOAD', defaultValue : true, description : 'DEPLOY_WORKLOAD')
+        
+        string(name : 'DOCKER_ACCOUNT_ID', defaultValue : "hwang088", description : 'DOCKER_ACCOUNT_ID')
+        string(name : 'DOCKER_IMAGE_NAME' defaultValue : 'pipeline-test', description : DOCKER_IMAGE_NAME)
+        string(name : 'DOCKER_TAG', defaultValue : '1.0.0', description : 'DOCKER_TAG')
     }
 
     environment {
         REGION = 'ap-northeast-1'
+        ECR_REPOSITORY = '${params.DOCKER_ACCOUNT_ID}/${params.DOCKER_IMAGE_NAME}'
+        ECR_DOCKER_TAG = '${params.DOCKER_TAG}'
     }
 
     stages {
@@ -19,7 +25,7 @@ pipeline {
             }
             steps {
                 dir("${env.WORKSPACE}") {
-                    sh 'docker build -t test:01 .'
+                    sh 'docker build -t ${ECR_REPOSITORY}:${ECR_DOCKER_TAG} .'
                 }
             }
             post {
@@ -31,7 +37,7 @@ pipeline {
         stage('============ Run test code ============') {
             when { expression { return params.RUN_TEST }}
             steps {
-                sh('docker run --rm test:01 /root/.local/bin/pytest -v ')
+                sh('docker run --rm ${ECR_REPOSITORY}:${ECR_DOCKER_TAG} /root/.local/bin/pytest -v ')
                 echo 'good'
             }
         }
@@ -39,9 +45,10 @@ pipeline {
             when { expression { return params.PUSH_DOCKER_IMAGE }}
             steps {
                 echo "Push Docker Image to Docker_hub"
-                //sh '''
-                //   docker push hwang088/test:01
-                //'''
+                sh '''
+                   cat ~/my_password.txt docker login --username ${params.DOCKER_ACCOUNT_ID} --password-stdin
+                   docker push ${ECR_REPOSITORY}:${ECR_DOCKER_TAG}
+                '''
             
             }
         }
@@ -54,7 +61,8 @@ pipeline {
     }
     post {
         cleanup {
-            echo "Post cleanup"
+            sh('docker image prune -f')
+            sh('docker container prune -f')
         }
     }
 }
