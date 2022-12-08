@@ -68,7 +68,7 @@ pipeline {
                 sshagent (credentials: ['aws_ec2_user_ssh']) {
                     sh """
                         ssh -o  UserKnownHostsFile=/dev/null -o StrictHostKeyChecking=no \
-                        {ec2-user}@{10.0.1.251} \
+                        ec2-user@10.0.1.251 \
                         'ls -al' 
                         """
                     /*sh """#!/bin/bash
