@@ -67,7 +67,7 @@ pipeline {
             steps {
                 sshagent (credentials: ['aws_ec2_user_ssh']) {
                     sh """
-                        scp -o  UserKnownHostsFile=/dev/null -o StrictHostKeyChecking=no {ec2-user}@{10.0.1.251} 'ls -al'
+                        ssh -o  UserKnownHostsFile=/dev/null -o StrictHostKeyChecking=no {ec2-user}@{10.0.1.251} 'ls -al'
                         """
                     /*sh """#!/bin/bash
                         scp -o UserKnownHostsFile=/dev/null -o StrictHostKeyChecking=no \
