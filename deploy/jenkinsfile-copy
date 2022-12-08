@@ -58,7 +58,7 @@ pipeline {
                    cat ~/my_password.txt | docker login --username ${DOCKER_ACCOUNT_ID} --password-stdin
                    docker push ${ECR_REPOSITORY}:${ECR_DOCKER_TAG}
                 '''
-                echo "Push Docker Image to Docker_hub!"
+                echo "Push Docker Image to Docker_hub"
             
             }
         }
@@ -79,7 +79,7 @@ pipeline {
                             docker-compose -f docker-compose.yml down;
                             docker-compose -f docker-compose.yml up -d';
                 """
-                    echo "complete" 
+                    echo "complete!!!!!" 
 
 
 
