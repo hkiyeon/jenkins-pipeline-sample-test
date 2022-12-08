@@ -22,7 +22,7 @@ pipeline {
 
     environment {
         REGION = "ap-northeast-1"
-        ECR_REPOSITORY = "${params.DOCKER_ACCOUNT_ID}/${params.DOCKER_IMAGE_NAME}"
+        ECR_REPOSITORY = "${params.ACCOUNT_ID}/${params.DOCKER_IMAGE_NAME}"
         ECR_DOCKER_TAG = "${params.DOCKER_TAG}"
         DOCKER_ACCOUNT_ID = "${params.ACCOUNT_ID}"
     }
