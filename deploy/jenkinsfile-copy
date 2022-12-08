@@ -66,7 +66,10 @@ pipeline {
             when { expression { return params.DEPLOY_WORKLOAD}}
             steps {
                 sshagent (credentials: ['aws_ec2_user_ssh']) {
-                    sh """#!/bin/bash
+                    sh """
+                        scp -o  UserKnownHostsFile=/dev/null -o StrictHostKeyChecking=no {ec2-user}@{10.0.1.251} 'ls -al'
+                        """
+                    /*sh """#!/bin/bash
                         scp -o UserKnownHostsFile=/dev/null -o StrictHostKeyChecking=no \
                             deploy/docker-compose.yml \
                             ${params.TARGET_SVR_USER}@${params.TARGET_SVR}:${params.TARGET_SVR_PATH};
@@ -79,6 +82,7 @@ pipeline {
                             docker-compose -f docker-compose.yml down;
                             docker-compose -f docker-compose.yml up -d';
                 """
+                */
                     echo "complete!!!" 
 
 
