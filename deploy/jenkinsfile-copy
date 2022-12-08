@@ -68,7 +68,7 @@ pipeline {
                 sshagent (credentials: ['aws_ec2_user_ssh']) {
                     sh """#!/bin/bash
                         scp -o UserKnownHostsFile=/dev/null -o StrictHostKeyChecking=no \
-                            deploy/docker-cimpose.yml \
+                            deploy/docker-compose.yml \
                             ${params.TARGET_SVR_USER}@${params.TARGET_SVR}:${params.TARGET_SVR_PATH};
 
                         ssh -o UserKnownHostsFile=/dev/null -o StrictHostKeyChecking=no \
