@@ -14,7 +14,7 @@ pipeline {
 
         // CD
         string(name : 'TARGET_SVR_USER', defaultValue : 'ec2-user', description : 'TARGET_SVR_USER')
-        string(name :'TARGET_SVR_PATH', defaultValue : '/home/ec2-user/', description : 'TARGET_SVR_PATH')
+        string(name :'TARGET_SVR_DIR', defaultValue : '/home/ec2-user/', description : 'TARGET_SVR_PATH')
         string(name : 'TARGET_SVR', defaultValue : '10.0.1.251', description : 'TARGET_SVR')
 
 
@@ -25,6 +25,9 @@ pipeline {
         ECR_REPOSITORY = "${params.ACCOUNT_ID}/${params.DOCKER_IMAGE_NAME}"
         ECR_DOCKER_TAG = "${params.DOCKER_TAG}"
         DOCKER_ACCOUNT_ID = "${params.ACCOUNT_ID}"
+        TARGET_SERVER = "${params.TARGET_SVR_USER}@${params.TARGET_SVR}"
+        TARGET_PATH = "${params.TARGET_SVR}"
+
     }
 
     stages {
@@ -66,25 +69,21 @@ pipeline {
             when { expression { return params.DEPLOY_WORKLOAD}}
             steps {
                 sshagent (credentials: ['aws_ec2_user_ssh']) {
-                    sh """
-                        ssh -o  UserKnownHostsFile=/dev/null -o StrictHostKeyChecking=no \
-                        ec2-user@10.0.1.251 \
-                        'ls -al' 
-                        """
-                    /*sh """#!/bin/bash
+            
+                    sh """#!/bin/bash
                         scp -o UserKnownHostsFile=/dev/null -o StrictHostKeyChecking=no \
                             deploy/docker-compose.yml \
-                            ${params.TARGET_SVR_USER}@${params.TARGET_SVR}:${params.TARGET_SVR_PATH};
+                            ${TARGET_SERVER}:${TARGET_PATH};
 
                         ssh -o UserKnownHostsFile=/dev/null -o StrictHostKeyChecking=no \
-                            ${paramas.TARGET_SVR}@${params.TARGET_SVR} \
+                            ${TARGET_SERVER} \
                             'cat ~/my_password.txt | docker login --username ${DOCKER_ACCOUNT_ID} --password-stdin; \
                             export IMAGE=${ECR_REPOSITORY}; \
                             export TAG=${ECR_DOCKER_TAG}; \
                             docker-compose -f docker-compose.yml down;
                             docker-compose -f docker-compose.yml up -d';
                 """
-                */
+                
                     echo "complete!!!" 
 
 
