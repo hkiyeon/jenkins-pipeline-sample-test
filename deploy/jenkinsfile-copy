@@ -7,9 +7,17 @@ pipeline {
         booleanParam(name : 'PUSH_DOCKER_IMAGE', defaultValue : true, description : 'PUSH_DOCKER_IMAGE')
         booleanParam(name : 'DEPLOY_WORKLOAD', defaultValue : true, description : 'DEPLOY_WORKLOAD')
         
+        // CI
         string(name : 'ACCOUNT_ID', defaultValue : 'hwang088', description : 'ACCOUNT_ID')
         string(name : 'DOCKER_IMAGE_NAME', defaultValue : 'pipeline-test', description : 'DOCKER_IMAGE_NAME')
         string(name : 'DOCKER_TAG', defaultValue : '1.0.0', description : 'DOCKER_TAG')
+
+        // CD
+        string(name : 'TARGET_SVR_USER', defaultValue : 'ec2-user', description : 'TARGET_SVR_USER')
+        string(name :'TARGET_SVR_PATH', defaultValue : '/home/ec2-user/', description : 'TARGET_SVR_PATH')
+        string(name : 'TARGET_SVR', defaultValue : '10.0.1.251', description : 'TARGET_SVR')
+
+
     }
 
     environment {
@@ -57,7 +65,24 @@ pipeline {
         stage('============ Deploy workload ============') {
             when { expression { return params.DEPLOY_WORKLOAD}}
             steps {
-                echo "DEPLOY WORKLOAD!!"
+                sshagent (credentials: ['aws_ec2_user_ssh']) {
+                    sh """#!/bin/bash
+                        scp -o UserKnownHostsFile=/dev/null -o StrictHostKeyChecking=no \
+                            deploy/docker-cimpose.yml \
+                            ${params.TARGET_SVR_USER}@${params.TARGET_SVR}:${params.TARGET_SVR_PATH};
+
+                        ssh -o UserKnownHostsFile=/dev/null -o StrictHostKeyChecking=no \
+                            ${paramas.TARGET_SVR}@${params.TARGET_SVR} \
+                            'cat ~/my_password.txt | docker login --username ${DOCKER_ACCOUNT_ID} --password-stdin; \
+                            export IMAGE=${ECR_REPOSITORY}; \
+                            export TAG=${ECR_DOCKER_TAG}; \
+                            docker-compose -f docker-compose.yml down;
+                            docker-compose -f docker-compose.yml up -d';
+                """
+
+
+
+                }
             }
         }
     }
