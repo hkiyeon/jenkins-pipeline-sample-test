@@ -26,12 +26,12 @@ pipeline {
         ECR_DOCKER_TAG = "${params.DOCKER_TAG}"
         DOCKER_ACCOUNT_ID = "${params.ACCOUNT_ID}"
         TARGET_SERVER = "${params.TARGET_SVR_USER}@${params.TARGET_SVR}"
-        TARGET_PATH = "${params.TARGET_SVR}"
+        TARGET_PATH = "${params.TARGET_SVR_DIR}"
 
     }
 
     stages {
-        stage('============ Build Docker Image ============')   {
+        stage('============ Build Docker Image ============') {
             when {
                 expression {return params.BUILD_DOCKER_IMAGE}
             }
