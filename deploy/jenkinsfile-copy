@@ -73,7 +73,7 @@ pipeline {
                     sh """#!/bin/bash
                         scp -o UserKnownHostsFile=/dev/null -o StrictHostKeyChecking=no \
                             deploy/docker-compose.yml \
-                            ${TARGET_SERVER}:${TARGET_PATH};
+                            ${111TARGET_SERVER}:${TARGET_PATH};
 
                         ssh -o UserKnownHostsFile=/dev/null -o StrictHostKeyChecking=no \
                             ${TARGET_SERVER} \
