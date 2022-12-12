@@ -1,38 +1,43 @@
 pipeline {
-  agent { label 'master' }
+    agent any
 
     parameters {
         booleanParam(name : 'BUILD_DOCKER_IMAGE', defaultValue : true, description : 'BUILD_DOCKER_IMAGE')
         booleanParam(name : 'RUN_TEST', defaultValue : true, description : 'RUN_TEST')
         booleanParam(name : 'PUSH_DOCKER_IMAGE', defaultValue : true, description : 'PUSH_DOCKER_IMAGE')
-        booleanParam(name : 'PROMPT_FOR_DEPLOY', defaultValue : false, description : 'PROMPT_FOR_DEPLOY')
         booleanParam(name : 'DEPLOY_WORKLOAD', defaultValue : true, description : 'DEPLOY_WORKLOAD')
-
+        
         // CI
-        string(name : 'AWS_ACCOUNT_ID', defaultValue : '657976307134', description : 'AWS_ACCOUNT_ID')
-        string(name : 'DOCKER_IMAGE_NAME', defaultValue : 'demo', description : 'DOCKER_IMAGE_NAME')
+        string(name : 'ACCOUNT_ID', defaultValue : 'hwang088', description : 'ACCOUNT_ID')
+        string(name : 'DOCKER_IMAGE_NAME', defaultValue : 'pipeline-test', description : 'DOCKER_IMAGE_NAME')
         string(name : 'DOCKER_TAG', defaultValue : '1.0.0', description : 'DOCKER_TAG')
 
         // CD
         string(name : 'TARGET_SVR_USER', defaultValue : 'ec2-user', description : 'TARGET_SVR_USER')
-        string(name : 'TARGET_SVR_PATH', defaultValue : '/home/ec2-user/', description : 'TARGET_SVR_PATH')
-        string(name : 'TARGET_SVR', defaultValue : '10.0.3.61', description : 'TARGET_SVR')
+        string(name :'TARGET_SVR_DIR', defaultValue : '/home/ec2-user/', description : 'TARGET_SVR_PATH')
+        string(name : 'TARGET_SVR', defaultValue : '10.0.1.251', description : 'TARGET_SVR')
+
+
     }
 
     environment {
-        REGION = "ap-northeast-2"
-        ECR_REPOSITORY = "${params.AWS_ACCOUNT_ID}.dkr.ecr.ap-northeast-2.amazonaws.com"
-        ECR_DOCKER_IMAGE = "${ECR_REPOSITORY}/${params.DOCKER_IMAGE_NAME}"
+        REGION = "ap-northeast-1"
+        ECR_REPOSITORY = "${params.ACCOUNT_ID}/${params.DOCKER_IMAGE_NAME}"
         ECR_DOCKER_TAG = "${params.DOCKER_TAG}"
+        DOCKER_ACCOUNT_ID = "${params.ACCOUNT_ID}"
+        TARGET_SERVER = "${params.TARGET_SVR_USER}@${params.TARGET_SVR}"
+        TARGET_PATH = "${params.TARGET_SVR_DIR}"
+
     }
 
     stages {
         stage('============ Build Docker Image ============') {
-            when { expression { return params.BUILD_DOCKER_IMAGE } }
-            agent { label 'build' }
+            when {
+                expression {return params.BUILD_DOCKER_IMAGE}
+            }
             steps {
                 dir("${env.WORKSPACE}") {
-                    sh 'docker build -t ${ECR_DOCKER_IMAGE}:${ECR_DOCKER_TAG} .'
+                    sh 'docker build -t ${ECR_REPOSITORY}:${ECR_DOCKER_TAG} .'
                 }
             }
             post {
@@ -42,64 +47,59 @@ pipeline {
             }
         }
         stage('============ Run test code ============') {
-            when { expression { return params.RUN_TEST } }
-            agent { label 'build' }
+            when { expression { return params.RUN_TEST }}
             steps {
-                sh'''
-                      aws ecr get-login-password --region ${REGION} | docker login --username AWS --password-stdin ${ECR_REPOSITORY}
-                      docker run --rm ${ECR_DOCKER_IMAGE}:${ECR_DOCKER_TAG} /root/.local/bin/pytest -v
-                '''
+                sh('docker run --rm ${ECR_REPOSITORY}:${ECR_DOCKER_TAG} /root/.local/bin/pytest -v ')
+                echo 'good'
             }
         }
         stage('============ Push Docker Image ============') {
-            when { expression { return params.PUSH_DOCKER_IMAGE } }
-            agent { label 'build' }
+            when { expression { return params.PUSH_DOCKER_IMAGE }}
             steps {
-                echo "Push Docker Image to ECR"
-                sh'''
-                      aws ecr get-login-password --region ${REGION} | docker login --username AWS --password-stdin ${ECR_REPOSITORY}
-                      docker push ${ECR_DOCKER_IMAGE}:${ECR_DOCKER_TAG}
+                
+                sh '''
+                   cat ~/my_password.txt | docker login --username ${DOCKER_ACCOUNT_ID} --password-stdin
+                   docker push ${ECR_REPOSITORY}:${ECR_DOCKER_TAG}
                 '''
-            }
-        }
-        stage('Prompt for deploy') {
-            when { expression { return params.PROMPT_FOR_DEPLOY } }
-            agent { label 'deploy' }
-            steps {
-                script {
-                    env.APPROAL_NUM = input message: 'Please enter the approval number',
-                                      parameters: [string(defaultValue: '',
-                                      description: '',
-                                      name: 'APPROVAL_NUM')]
-                }
-
-                echo "${env.APPROAL_NUM}"
+                echo "Push Docker Image to Docker_hub"
+            
             }
         }
         stage('============ Deploy workload ============') {
-            when { expression { return params.DEPLOY_WORKLOAD } }
-            agent { label 'deploy' }
+            when { expression { return params.DEPLOY_WORKLOAD}}
             steps {
                 sshagent (credentials: ['aws_ec2_user_ssh']) {
+            
                     sh """#!/bin/bash
                         scp -o UserKnownHostsFile=/dev/null -o StrictHostKeyChecking=no \
                             deploy/docker-compose.yml \
-                            ${params.TARGET_SVR_USER}@${params.TARGET_SVR}:${params.TARGET_SVR_PATH};
-                          
+                            ${TARGET_SERVER}:${TARGET_PATH};
+
                         ssh -o UserKnownHostsFile=/dev/null -o StrictHostKeyChecking=no \
-                            ${params.TARGET_SVR_USER}@${params.TARGET_SVR} \
-                            'aws ecr get-login-password --region ${REGION} | docker login --username AWS --password-stdin ${ECR_REPOSITORY}; \
-                            export IMAGE=${ECR_DOCKER_IMAGE}; \
+                            ${TARGET_SERVER} \
+                            'cat ~/my_password.txt | docker login --username ${DOCKER_ACCOUNT_ID} --password-stdin; \
+                            export IMAGE=${ECR_REPOSITORY}; \
                             export TAG=${ECR_DOCKER_TAG}; \
                             docker-compose -f docker-compose.yml down;
                             docker-compose -f docker-compose.yml up -d';
-                    """                 
+                """
+                
+                    echo "complete" 
+
+
+
                 }
             }
         }
     }
-
     post {
+        success {
+            slackSend(
+                channel: "#jenkins_test",
+                color: "good",
+                message: "[Successful] Job:${env.JOB_NAME}, Build num:#${env.BUILD_NUMBER} (<${env.RUN_DISPLAY_URL}|open job detail>)"
+            )
+        }
         failure {
             slackSend(
                 channel: "#jenkins_test",
@@ -107,5 +107,5 @@ pipeline {
                 message: "[Failed] Job:${env.JOB_NAME}, Build num:#${env.BUILD_NUMBER} @channel (<${env.RUN_DISPLAY_URL}|open job detail>)"
             )
         }
-    }        
+    }
 }
