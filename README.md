@@ -1,2 +1,2 @@
 # jenkins-pipeline-sample-test
-![my-diagram](./diagram/jenkins-image.png)
+![my-diagram](./diagram/jenkins-image.PNG)
